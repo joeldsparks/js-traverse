@@ -143,6 +143,10 @@ function walk (root, cb, immutable) {
             remove : function (stopHere) {
                 if (isArray(state.parent.node)) {
                     state.parent.node.splice(state.key, 1);
+                    if (state.parent.index < state.parent.keys.length-1) {
+                      state.parent.index--;
+                      state.parent.keys.pop();
+                    }
                 }
                 else {
                     delete state.parent.node[state.key];
@@ -150,6 +154,7 @@ function walk (root, cb, immutable) {
                 if (stopHere) keepGoing = false;
             },
             keys : null,
+            index: null,
             before : function (f) { modifiers.before = f },
             after : function (f) { modifiers.after = f },
             pre : function (f) { modifiers.pre = f },
@@ -199,8 +204,9 @@ function walk (root, cb, immutable) {
             parents.push(state);
             
             updateState();
-            
-            forEach(state.keys, function (key, i) {
+
+            for(state.index=0; state.index < state.keys.length; state.index++) {
+                var key = state.keys[state.index];
                 path.push(key);
                 
                 if (modifiers.pre) modifiers.pre.call(state, state.node[key], key);
@@ -210,13 +216,13 @@ function walk (root, cb, immutable) {
                     state.node[key] = child.node;
                 }
                 
-                child.isLast = i == state.keys.length - 1;
-                child.isFirst = i == 0;
+                child.isLast = state.index == state.keys.length - 1;
+                child.isFirst = state.index == 0;
                 
                 if (modifiers.post) modifiers.post.call(state, child);
                 
                 path.pop();
-            });
+            }
             parents.pop();
         }
         
